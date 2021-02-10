@@ -1,15 +1,16 @@
-import pygame
-import sys
 import os
-import random
+import sys
+
+import pygame
 
 pygame.init()
-size = w, h = 854, 480
-screen = pygame.display.set_mode(size)
+display_inf = pygame.display.Info()
+size = w, h = display_inf.current_w, display_inf.current_h
+screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
 
 
 def load_image(name, colorkey=None):
-    fullname = os.path.join('', name)
+    fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
         sys.exit()
@@ -34,10 +35,12 @@ def load_level(filename):
 class Board:
     def __init__(self):
         self.board = [[0] * 8 for _ in range(8)]
-        self.left = 227
-        self.top = 40
-        self.cell_size = 50
-        self.colors = [pygame.Color('white'), pygame.Color('black')]
+        global h, w
+        self.cell_size = h // 10
+        self.left = w // 2 - 4 * self.cell_size
+        self.top = self.cell_size
+
+        self.colors = [pygame.Color('black'), pygame.Color('white')]
         self.letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 
     def set_view(self, left, top, cell_size):
@@ -46,21 +49,25 @@ class Board:
         self.cell_size = cell_size
 
     def render(self, scrn):
-        font = pygame.font.Font(None, 30)
+        global h, w
+        font = pygame.font.Font(None, 60)
         for i in range(8):
             for j in range(8):
-                pygame.draw.rect(scrn, self.colors[(i + j) % 2], (self.left + i * self.cell_size,
-                                                                  self.top + j * self.cell_size,
+                pygame.draw.rect(scrn, self.colors[(i + j) % 2], (self.left + j * self.cell_size,
+                                                                  self.top + i * self.cell_size,
                                                                   self.cell_size, self.cell_size), 0)
-            text = font.render(self.letters[i], True, pygame.Color('white'))
-            text_x = self.left + i * self.cell_size + self.cell_size // 2 - text.get_width() // 2
-            text_y = 450
-            screen.blit(text, (text_x, text_y))
-            text2 = font.render(str(i + 1), True, pygame.Color('white'))
-            text2_x = 207
-            text2_y = 440 - i * self.cell_size - self.cell_size // 2 - text2.get_height() // 2
-            screen.blit(text2, (text2_x, text2_y))
-        pygame.draw.rect(scrn, pygame.Color('white'), (self.left, self.top, 400, 400), 1)
+            for j in [-1, 1]:
+                text = font.render(str(i + 1), True, pygame.Color('white'))
+                text_x = self.left + i * self.cell_size + self.cell_size // 2 + text.get_width() // 2
+                text_y = h // 2 + j * (4 * self.cell_size + self.cell_size // 3 * 2)
+                screen.blit(text, (text_x, text_y))
+
+                text2 = font.render(self.letters[i], True, pygame.Color('white'))
+                text2_x = w // 2 + j * (4 * self.cell_size + self.cell_size // 3 * 2)
+                text2_y =  (1+i) * self.cell_size + self.cell_size // 2 - text2.get_height() // 2
+                screen.blit(text2, (text2_x, text2_y))
+
+        pygame.draw.rect(scrn, pygame.Color('white'), (self.left, self.top, self.cell_size * 8, self.cell_size * 8), 1)
 
     def get_cell(self, mouse_pos):
         x, y = mouse_pos
@@ -131,6 +138,9 @@ if __name__ == '__main__':
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
         screen.fill((0, 0, 0))
         board.render(screen)
         all_sprites.draw(screen)
