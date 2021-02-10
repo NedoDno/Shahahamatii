@@ -58,13 +58,13 @@ class Board:
                                                                   self.cell_size, self.cell_size), 0)
             for j in [-1, 1]:
                 text = font.render(str(i + 1), True, pygame.Color('white'))
-                text_x = self.left + i * self.cell_size + self.cell_size // 2 + text.get_width() // 2
-                text_y = h // 2 + j * (4 * self.cell_size + self.cell_size // 3 * 2)
+                text_x = self.left + i * self.cell_size + self.cell_size // 2 - text.get_width() // 2
+                text_y = h // 2 - text.get_height() // 2 + j * (4 * self.cell_size + self.cell_size // 2)
                 screen.blit(text, (text_x, text_y))
 
                 text2 = font.render(self.letters[i], True, pygame.Color('white'))
-                text2_x = w // 2 + j * (4 * self.cell_size + self.cell_size // 3 * 2)
-                text2_y =  (1+i) * self.cell_size + self.cell_size // 2 - text2.get_height() // 2
+                text2_x = w // 2 - text2.get_width() // 2 + j * (4 * self.cell_size + self.cell_size // 2)
+                text2_y = (1 + i) * self.cell_size + self.cell_size // 2 - text2.get_height() // 2
                 screen.blit(text2, (text2_x, text2_y))
 
         pygame.draw.rect(scrn, pygame.Color('white'), (self.left, self.top, self.cell_size * 8, self.cell_size * 8), 1)
