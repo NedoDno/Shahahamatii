@@ -7,7 +7,7 @@ pygame.init()
 display_inf = pygame.display.Info()
 size = w, h = display_inf.current_w, display_inf.current_h
 screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
-
+player = 1
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -34,6 +34,8 @@ def load_level(filename):
 
 class BoardNacl:
     def __init__(self):
+        # Выбранная фигура
+        self.select_figure = None
         global h, w
         # цвета и буквы
         self.colors = [pygame.Color('black'), pygame.Color('white'), pygame.Color('#0b3189'), pygame.Color('#e60404')]
@@ -57,23 +59,24 @@ class BoardNacl:
         font = pygame.font.Font(None, 60)
 
         text = font.render(str(i + 1), True, pygame.Color('white'))
-        text_x = self.points[0][0][0] + (self.points[i + 1][0][0] - self.points[0][0][0]) - \
-                 (self.points[i + 1][0][0] - self.points[i][0][0]) // 2 - text.get_width()
-        text_y = h // 2 - text.get_height() // 2 + 1 * (4 * self.cell_size + self.cell_size // 2)
-        screen.blit(text, (text_x, text_y))
-
-        text = font.render(str(i + 1), True, pygame.Color('white'))
-        text_x = self.points[-1][0][0] + (self.points[-1][i][0] - self.points[i][-1][0]) // 2 - text.get_width()
+        text_x = self.left + i * self.cell_size + self.cell_size // 2 - text.get_width() // 2
         text_y = h // 2 - text.get_height() // 2 + -1 * (4 * self.cell_size + self.cell_size // 2)
         screen.blit(text, (text_x, text_y))
 
+        text = font.render(str(i + 1), True, pygame.Color('white'))
+        text_x = (w // 2 - 4 * (self.cell_size + 10 * 8)) + i * (self.cell_size + 10 * 8) + (
+                self.cell_size + 10 * 8) // 2 - text.get_width() // 2
+        text_y = h // 2 - text.get_height() // 2 + 1 * (4 * self.cell_size + self.cell_size // 2)
+        screen.blit(text, (text_x, text_y))
+
         text2 = font.render(self.letters[i], True, pygame.Color('white'))
-        text2_x = w // 2 - text2.get_width() // 2 + 1 * (4 * self.cell_size + self.cell_size // 2)
+        text2_x = w // 2 - text2.get_width() // 2 + 1 * (4 * (self.cell_size + 10 * i) + (self.cell_size + 10 * 2) // 2)
         text2_y = (1 + i) * self.cell_size + self.cell_size // 2 - text2.get_height() // 2
         screen.blit(text2, (text2_x, text2_y))
 
         text2 = font.render(self.letters[i], True, pygame.Color('white'))
-        text2_x = w // 2 - text2.get_width() // 2 + -1 * (4 * self.cell_size + self.cell_size // 2)
+        text2_x = w // 2 - text2.get_width() // 2 + -1 * (
+                4 * (self.cell_size + 10 * i) + (self.cell_size + 10 * 2) // 2)
         text2_y = (1 + i) * self.cell_size + self.cell_size // 2 - text2.get_height() // 2
         screen.blit(text2, (text2_x, text2_y))
 
@@ -110,22 +113,27 @@ class BoardNacl:
         return a, b
 
     def on_click(self, cell_coords):
-        print(cell_coords)
-        # Pawn(1, cell_coords)
-        global level_map
+        global level_map, player
         if not cell_coords is None:
             self.lightting_cell.clear()
-            try:
-                light = level_map[cell_coords[0]][cell_coords[1]].get_go_att_cells()
-                for i in light:
-                    self.lightting_cell.append(((self.points[i[0][0]][i[0][1]],
-                                                 self.points[i[0][0]][i[0][1] + 1],
-                                                 self.points[i[0][0] + 1][i[0][1] + 1],
-                                                 self.points[i[0][0] + 1][i[0][1]]), i[1]))
-            except:
-                pass
+            if not self.select_figure is None:
+                if player == self.select_figure.color:
+                    self.select_figure.move(cell_coords, self)
+                    player = -player
+                self.select_figure = None
+            else:
+                try:
+                    light = level_map[cell_coords[0]][cell_coords[1]].get_go_att_cells()
+                    self.select_figure = level_map[cell_coords[0]][cell_coords[1]]
+                    for i in light:
+                        self.lightting_cell.append(((self.points[i[0][0]][i[0][1]],
+                                                     self.points[i[0][0]][i[0][1] + 1],
+                                                     self.points[i[0][0] + 1][i[0][1] + 1],
+                                                     self.points[i[0][0] + 1][i[0][1]]), i[1]))
+                except:
+                    pass
 
-            # self.light_cell(cell_coords, 2)
+                # self.light_cell(cell_coords, 2)
         else:
             self.lightting_cell.clear()
 
@@ -206,18 +214,18 @@ class Pawn(pygame.sprite.Sprite):
     image_w = pygame.transform.scale(load_image('pawn_w.png'), (h // 5, h // 5 - h // 45))
     image_b = pygame.transform.scale(load_image('pawn_b.png'), (h // 5, h // 5 - h // 45))
 
-    def __init__(self, color, pos):
+    def __str__(self):
+        return 'p'
+
+    def __init__(self, color, pos, all_sprites, board):
         super().__init__(all_sprites)
-        if color:
+        self.color = color
+        if color == 1:
             self.image = Pawn.image_w
         else:
             self.image = Pawn.image_b
-        self.cell = pos
-        print(self.cell)
-        self.rect = self.image.get_rect()
-        self.rect.x = board.points[self.cell[0]][self.cell[1]][0] + (
-                board.cell_size + 15 * (self.cell[1] + 1)) // 2 - self.rect.width // 2
-        self.rect.y = board.top + board.cell_size * (self.cell[0] + 1) - self.rect.height - 15
+        self.cell = ''
+        self.move(pos, board)
 
     def get_go_att_cells(self):
         points = []
@@ -227,20 +235,55 @@ class Pawn(pygame.sprite.Sprite):
 
     def get_attack_coords(self):
         attack_p = []
-        print(self.cell)
-        if 0 <= self.cell[0] + 1 < 8 and 0 <= self.cell[1] + 1 < 8:
-            attack_p.append(((self.cell[0] + 1, self.cell[1] + 1), 3))
-        if 0 <= self.cell[0] - 1 < 8 and 0 <= self.cell[1] + 1 < 8:
-            attack_p.append(((self.cell[0] - 1, self.cell[1] + 1), 3))
+        if 0 <= self.cell[0] + 1* self.color < 8 and 0 <= self.cell[1] + 1* self.color < 8:
+            attack_p.append(((self.cell[0] + 1 * self.color, self.cell[1] + 1 * self.color), 3))
+        if 0 <= self.cell[0] - 1* self.color < 8 and 0 <= self.cell[1] + 1* self.color < 8:
+            attack_p.append(((self.cell[0] - 1 * self.color, self.cell[1] + 1 * self.color), 3))
+        attack_p = [i for i in attack_p if
+                    level_map[i[0][0]][i[0][1]].__class__.__name__ != 'Tile' and level_map[i[0][0]][
+                        i[0][1]].color != self.color]
+
         return attack_p
 
     def get_go_coords(self):
         go_p = []
-        if 0 <= self.cell[1] + 1 < 8:
-            go_p.append(((self.cell[0], self.cell[1] + 1), 2))
-        if 0 <= self.cell[1] + 2 < 8 and self.cell[1] == 1:
-            go_p.append(((self.cell[0], self.cell[1] + 2), 2))
+        if 0 <= self.cell[1] + 1* self.color < 8:
+            go_p.append(((self.cell[0], self.cell[1] + 1 * self.color), 2))
+        if (0 <= self.cell[1] + 2* self.color < 8 and
+                ((self.cell[1] == 1 and self.color == 1) or (self.cell[1] == 6 and self.color != 1))
+                and level_map[self.cell[0]][self.cell[1] + 1* self.color].__class__.__name__ == 'Tile'):
+            go_p.append(((self.cell[0], self.cell[1] + 2 * self.color), 2))
+        go_p = [i for i in go_p if level_map[i[0][0]][i[0][1]].__class__.__name__ == 'Tile']
         return go_p
+
+    def eat(self, pos, board):
+        if pos != (-5, -5):
+            if len(level_map) == 8 and len(level_map[-1]) == 8:
+                if level_map[pos[0]][pos[1]].__class__.__name__ != 'Tile':
+                    level_map[pos[0]][pos[1]].be_eaten(board)
+                level_map[self.cell[0]][self.cell[1]] = Tile(0, 0, 0, 0)
+                level_map[pos[0]][pos[1]] = self
+
+    def be_eaten(self, board):
+        eaten_figure.append(self)
+        self.move((-5, -5), board)
+        print(self)
+
+    def move(self, pos, board):
+        global level_map
+        try:
+            print(self.get_go_att_cells())
+        except:
+            pass
+        if not (len(level_map) == 8 and len(level_map[-1]) == 8) or pos == (-5, -5) or pos in [i[0] for i in
+                                                                                               self.get_go_att_cells()]:
+            self.eat(pos, board)
+
+            self.cell = pos
+            self.rect = self.image.get_rect()
+            self.rect.x = board.points[self.cell[0]][self.cell[1]][0] + (
+                    board.cell_size + 15 * (self.cell[1] + 1)) // 2 - self.rect.width // 2
+            self.rect.y = board.top + board.cell_size * (self.cell[0] + 1) - self.rect.height - 15
 
     def update(self):
         if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
@@ -249,28 +292,32 @@ class Pawn(pygame.sprite.Sprite):
 
 
 class Tile:
-    def __init__(self, color, pos):
+    def __init__(self, color, pos, sprite, board):
         pass
 
+    def __str__(self):
+        return '.'
 
-PIECES = {'P': (Pawn, 1), 'p': (Pawn, 0), '.': (Tile, 0)}
+
+PIECES = {'P': (Pawn, 1), 'p': (Pawn, -1), '.': (Tile, 0)}
 level_map = []
+eaten_figure = []
 
 
-def generate_level(level):
+def generate_level(level, all_sprites, board):
     global level_map
     for y in range(8):
         level_map.append([])
         for x in range(8):
-            print('pos:', y, x)
-            level_map[-1].append(PIECES[level[y][x]][0](PIECES[level[y][x]][1], (y, x)))
+            level_map[-1].append(PIECES[level[y][x]][0](PIECES[level[y][x]][1], (y, x), all_sprites, board))
 
 
 if __name__ == '__main__':
     board = BoardNacl()
     all_sprites = pygame.sprite.Group()
-    generate_level(load_level('pole.txt'))
+    generate_level(load_level('pole.txt'), all_sprites, board)
     running = True
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -284,4 +331,5 @@ if __name__ == '__main__':
         board.render(screen)
         all_sprites.draw(screen)
         pygame.display.flip()
+
     pygame.quit()
