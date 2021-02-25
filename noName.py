@@ -9,6 +9,7 @@ size = w, h = display_inf.current_w, display_inf.current_h
 screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
 player = 1
 
+
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
@@ -214,72 +215,106 @@ class Pawn(pygame.sprite.Sprite):
     image_w = pygame.transform.scale(load_image('pawn_w.png'), (h // 5, h // 5 - h // 45))
     image_b = pygame.transform.scale(load_image('pawn_b.png'), (h // 5, h // 5 - h // 45))
 
+    # Изменить
     def __str__(self):
+        '''Возвращает букву, которая обозначает фигуру.
+        Возвращает большую букву, если цвет белый, и маленькую - если чёрный'''
         return 'p'
 
+    # Изменить
     def __init__(self, color, pos, all_sprites, board):
+        '''Инициализирует фигуру'''
+        # Вызов конструктора родительского класса
         super().__init__(all_sprites)
+        # Присвоения цвета
         self.color = color
+        # Присвоение картинки в зависимости от цвета
         if color == 1:
             self.image = Pawn.image_w
         else:
             self.image = Pawn.image_b
-        self.cell = ''
-        self.move(pos, board)
 
+        self.cell = ''  # Координаты клетки, на которой стоит данная фигура
+        self.move(pos, board)  # передвигаем фигуру на данную клетку
+
+    # Не меняй
     def get_go_att_cells(self):
+        '''Возвращает координаты клеток, куда может пойти фигура в формате:
+                    ((координата_х, координата_у), цвет_выделения{значения: 2 - можно походить, 3 - можно съесть})'''
         points = []
         points.extend(self.get_attack_coords())
         points.extend(self.get_go_coords())
         return points
 
+    # Изменить
     def get_attack_coords(self):
-        attack_p = []
-        if 0 <= self.cell[0] + 1* self.color < 8 and 0 <= self.cell[1] + 1* self.color < 8:
+        '''Возвращает координаты клеток, куда может атаковать фигура в формате:
+                            ((координата_х, координата_у), 3)'''
+        attack_p = []  # Список клеток, которые может атаковать данная фигура
+
+        # находим координаты клетки, которая теоритически может быть атакована
+        if 0 <= self.cell[0] + 1 * self.color < 8 and 0 <= self.cell[1] + 1 * self.color < 8:
             attack_p.append(((self.cell[0] + 1 * self.color, self.cell[1] + 1 * self.color), 3))
-        if 0 <= self.cell[0] - 1* self.color < 8 and 0 <= self.cell[1] + 1* self.color < 8:
+        if 0 <= self.cell[0] - 1 * self.color < 8 and 0 <= self.cell[1] + 1 * self.color < 8:
             attack_p.append(((self.cell[0] - 1 * self.color, self.cell[1] + 1 * self.color), 3))
+
+        # Исключаем клетки, в которых не содержится фигуры
         attack_p = [i for i in attack_p if
                     level_map[i[0][0]][i[0][1]].__class__.__name__ != 'Tile' and level_map[i[0][0]][
                         i[0][1]].color != self.color]
 
         return attack_p
 
+    # Изменить
     def get_go_coords(self):
-        go_p = []
-        if 0 <= self.cell[1] + 1* self.color < 8:
+        '''Возвращает координаты клеток, куда может пойти фигура в формате:
+                            ((координата_х, координата_у), 2)'''
+        go_p = []  # список клеток, на которые фигура может пойти
+
+        # находим координаты клетки, на которые фигура может пойти
+        if 0 <= self.cell[1] + 1 * self.color < 8:
             go_p.append(((self.cell[0], self.cell[1] + 1 * self.color), 2))
-        if (0 <= self.cell[1] + 2* self.color < 8 and
+        if (0 <= self.cell[1] + 2 * self.color < 8 and
                 ((self.cell[1] == 1 and self.color == 1) or (self.cell[1] == 6 and self.color != 1))
-                and level_map[self.cell[0]][self.cell[1] + 1* self.color].__class__.__name__ == 'Tile'):
+                and level_map[self.cell[0]][self.cell[1] + 1 * self.color].__class__.__name__ == 'Tile'):
             go_p.append(((self.cell[0], self.cell[1] + 2 * self.color), 2))
+
+        # Исключаем клетки, которые содержат фигуры или которые находятся за фигурами
         go_p = [i for i in go_p if level_map[i[0][0]][i[0][1]].__class__.__name__ == 'Tile']
         return go_p
 
+    # Не меняй
     def eat(self, pos, board):
+        '''Данная фигура съедает фигуру, которая находится на позиции pos, если она там есть'''
         if pos != (-5, -5):
             if len(level_map) == 8 and len(level_map[-1]) == 8:
+                # Если есть фигура делаем её съеденой
                 if level_map[pos[0]][pos[1]].__class__.__name__ != 'Tile':
                     level_map[pos[0]][pos[1]].be_eaten(board)
+
                 level_map[self.cell[0]][self.cell[1]] = Tile(0, 0, 0, 0)
                 level_map[pos[0]][pos[1]] = self
 
+    # Не меняй
     def be_eaten(self, board):
+        '''Делает фигуру съеденой: добавляем её в список съеденых и передвигаем на несуществующие кординаты'''
+        global eaten_figure
         eaten_figure.append(self)
         self.move((-5, -5), board)
-        print(self)
 
+    # Не меняй
     def move(self, pos, board):
+        '''Двигает фигуру на координаты pos'''
+        # Импортируем в метод карту уровня
         global level_map
-        try:
-            print(self.get_go_att_cells())
-        except:
-            pass
-        if not (len(level_map) == 8 and len(level_map[-1]) == 8) or pos == (-5, -5) or pos in [i[0] for i in
-                                                                                               self.get_go_att_cells()]:
-            self.eat(pos, board)
+        # Если можем подвинуть - двигаем
+        if (not (len(level_map) == 8 and len(level_map[-1]) == 8)
+                or pos == (-5, -5) or pos in [i[0] for i in self.get_go_att_cells()]):
+            self.eat(pos, board)  # едим фигуру или воздух
 
-            self.cell = pos
+            self.cell = pos  # присваиваем фигуре новые координаты
+
+            # переделываем прямоугольник
             self.rect = self.image.get_rect()
             self.rect.x = board.points[self.cell[0]][self.cell[1]][0] + (
                     board.cell_size + 15 * (self.cell[1] + 1)) // 2 - self.rect.width // 2
@@ -288,9 +323,9 @@ class Pawn(pygame.sprite.Sprite):
     def update(self):
         if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
                 self.rect.collidepoint(args[0].pos):
-            print(1)
 
 
+# Класс который обозначает пустую клетку
 class Tile:
     def __init__(self, color, pos, sprite, board):
         pass
@@ -299,11 +334,13 @@ class Tile:
         return '.'
 
 
+# Словарь с обозначениями фигур
 PIECES = {'P': (Pawn, 1), 'p': (Pawn, -1), '.': (Tile, 0)}
-level_map = []
-eaten_figure = []
+level_map = []  # карта уровня
+eaten_figure = []  # Съеденые фигуры
 
 
+# Генерация уровня по файлу
 def generate_level(level, all_sprites, board):
     global level_map
     for y in range(8):
@@ -313,6 +350,7 @@ def generate_level(level, all_sprites, board):
 
 
 if __name__ == '__main__':
+
     board = BoardNacl()
     all_sprites = pygame.sprite.Group()
     generate_level(load_level('pole.txt'), all_sprites, board)
