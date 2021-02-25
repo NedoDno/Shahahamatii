@@ -2,9 +2,10 @@ import os
 import sys
 
 import pygame
+from noName import BoardNacl, generate_level, load_level
 
 pygame.init()
-state = 0
+state = 0  # Состояние программы: 0 - главное меню, 1 - игра
 display_inf = pygame.display.Info()
 size = w, h = display_inf.current_w, display_inf.current_h
 screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
@@ -65,27 +66,42 @@ def star(n):
 
 
 if __name__ == '__main__':
+    # Глобальные штуки
+    running = True
     all_sprites1 = pygame.sprite.Group()
+    all_sprites = pygame.sprite.Group()
+
+    # Игровые элементы
+    board = BoardNacl()
+    generate_level(load_level('pole.txt'), all_sprites, board)
+
+    # Элементы меню
     ext = Button((w // 2 - Button.image_b.get_width() // 2, h // 2), exit, 'EXIT')
     start = Button((w // 2 - Button.image_b.get_width() // 2, h // 8 * 3), star, 'START')
-    running = True
+
     while running:
-        print(state)
         screen.fill((0, 0, 0))
         if state == 0:
             all_sprites1.draw(screen)
             ext.rendel()
             start.rendel()
         elif state == 1:
-            pass
+            board.render(screen)
+            all_sprites.draw(screen)
         pygame.display.flip()
         for event in pygame.event.get():
             if state == 0:
                 start.update(event)
                 ext.update(event)
+            elif state == 1:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    board.get_click(event.pos)
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    running = False
+                    if state == 0:
+                        running = False
+                    else:
+                        state = 0
     pygame.quit()
