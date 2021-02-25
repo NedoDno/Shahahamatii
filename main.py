@@ -2,7 +2,7 @@ import os
 import sys
 
 import pygame
-from noName import BoardNacl, generate_level, load_level
+from games_thing import BoardNacl, generate_level, load_level
 
 pygame.init()
 state = 0  # Состояние программы: 0 - главное меню, 1 - игра
