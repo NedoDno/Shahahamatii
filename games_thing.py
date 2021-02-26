@@ -57,7 +57,7 @@ class BoardNacl:
             left = w // 2 - 4 * cel_s
 
     def render_text(self, scrn, i):
-        font = pygame.font.Font(None, 60)
+        font = pygame.font.Font('16881.otf', 35)
 
         text = font.render(str(i + 1), True, pygame.Color('white'))
         text_x = self.left + i * self.cell_size + self.cell_size // 2 - text.get_width() // 2
@@ -71,7 +71,7 @@ class BoardNacl:
         screen.blit(text, (text_x, text_y))
 
         text2 = font.render(self.letters[i], True, pygame.Color('white'))
-        text2_x = w // 2 - text2.get_width() // 2 + 1 * (4 * (self.cell_size + 10 * i) + (self.cell_size + 10 * 2) // 2)
+        text2_x = w // 2 - text2.get_width() // 2 + 1 * (4 * (self.cell_size + 10 * i) + (self.cell_size + 10 * 2) // 2) + 10
         text2_y = (1 + i) * self.cell_size + self.cell_size // 2 - text2.get_height() // 2
         screen.blit(text2, (text2_x, text2_y))
 
@@ -144,67 +144,6 @@ class BoardNacl:
                                         self.points[cell_coords[0]][cell_coords[1] + 1],
                                         self.points[cell_coords[0] + 1][cell_coords[1] + 1],
                                         self.points[cell_coords[0] + 1][cell_coords[1]]), colr))
-
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        self.on_click(cell)
-
-
-class Board:
-    def __init__(self):
-        self.board = [[0] * 8 for _ in range(8)]
-        global h, w
-        self.cell_size = h // 10
-        self.left = w // 2 - 4 * self.cell_size
-        self.top = self.cell_size
-
-        self.colors = [pygame.Color('black'), pygame.Color('white')]
-        self.letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-
-    def set_view(self, left, top, cell_size):
-        self.left = left
-        self.top = top
-        self.cell_size = cell_size
-
-    def render(self, scrn):
-        global h, w
-        font = pygame.font.Font(None, 60)
-        for i in range(8):
-            for j in range(8):
-                pygame.draw.rect(scrn, self.colors[(i + j) % 2], (self.left + j * self.cell_size,
-                                                                  self.top + i * self.cell_size,
-                                                                  self.cell_size, self.cell_size), 0)
-            for j in [-1, 1]:
-                text = font.render(str(i + 1), True, pygame.Color('white'))
-                text_x = self.left + i * self.cell_size + self.cell_size // 2 - text.get_width() // 2
-                text_y = h // 2 - text.get_height() // 2 + j * (4 * self.cell_size + self.cell_size // 2)
-                screen.blit(text, (text_x, text_y))
-
-                text2 = font.render(self.letters[i], True, pygame.Color('white'))
-                text2_x = w // 2 - text2.get_width() // 2 + j * (4 * self.cell_size + self.cell_size // 2)
-                text2_y = (1 + i) * self.cell_size + self.cell_size // 2 - text2.get_height() // 2
-                screen.blit(text2, (text2_x, text2_y))
-
-        pygame.draw.rect(scrn, pygame.Color('white'), (self.left, self.top, self.cell_size * 8, self.cell_size * 8), 1)
-
-    def get_cell(self, mouse_pos):
-        x, y = mouse_pos
-        a, b = None, None
-        for i, k in enumerate(range(self.left, self.left + self.cell_size * 8, self.cell_size)):
-            if k <= x <= k + self.cell_size:
-                a = i
-                break
-        for i, k in enumerate(range(self.top, self.top + self.cell_size * 8, self.cell_size)):
-            if k <= y <= k + self.cell_size:
-                b = i
-                break
-        if a == None or b == None:
-            return None
-        return a, b
-
-    def on_click(self, cell_coords):
-        print(cell_coords)
-        Pawn(1, cell_coords)
 
     def get_click(self, mouse_pos):
         cell = self.get_cell(mouse_pos)
@@ -323,6 +262,7 @@ class Pawn(pygame.sprite.Sprite):
     def update(self):
         if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
                 self.rect.collidepoint(args[0].pos):
+            pass
 
 
 # Класс который обозначает пустую клетку
@@ -365,7 +305,7 @@ if __name__ == '__main__':
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-        screen.fill((0, 0, 0))
+
         board.render(screen)
         all_sprites.draw(screen)
         pygame.display.flip()
