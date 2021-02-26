@@ -1,6 +1,5 @@
 import os
 import sys
-
 import pygame
 
 pygame.init()
@@ -71,7 +70,8 @@ class BoardNacl:
         screen.blit(text, (text_x, text_y))
 
         text2 = font.render(self.letters[i], True, pygame.Color('white'))
-        text2_x = w // 2 - text2.get_width() // 2 + 1 * (4 * (self.cell_size + 10 * i) + (self.cell_size + 10 * 2) // 2) + 10
+        text2_x = w // 2 - text2.get_width() // 2 + 1 * (
+                    4 * (self.cell_size + 10 * i) + (self.cell_size + 10 * 2) // 2) + 10
         text2_y = (1 + i) * self.cell_size + self.cell_size // 2 - text2.get_height() // 2
         screen.blit(text2, (text2_x, text2_y))
 
@@ -151,8 +151,13 @@ class BoardNacl:
 
 
 class Pawn(pygame.sprite.Sprite):
-    image_w = pygame.transform.scale(load_image('pawn_w.png'), (h // 5, h // 5 - h // 45))
-    image_b = pygame.transform.scale(load_image('pawn_b.png'), (h // 5, h // 5 - h // 45))
+    image_w = load_image('Queen_elfe.png')
+    image_w = pygame.transform.scale(image_w,
+                                     (int(((h // 5 - 20) / image_w.get_height())
+                                      * image_w.get_width()), h // 5 - 20))
+    image_b = load_image('Queen_man.png')
+    image_b = pygame.transform.scale(image_b,
+                                     (int(((h // 5 - 20) / image_b.get_height()) * image_b.get_width()), h // 5 - 20))
 
     # Изменить
     def __str__(self):
@@ -175,6 +180,7 @@ class Pawn(pygame.sprite.Sprite):
 
         self.cell = ''  # Координаты клетки, на которой стоит данная фигура
         self.move(pos, board)  # передвигаем фигуру на данную клетку
+        print(self.rect)
 
     # Не меняй
     def get_go_att_cells(self):
@@ -256,7 +262,7 @@ class Pawn(pygame.sprite.Sprite):
             # переделываем прямоугольник
             self.rect = self.image.get_rect()
             self.rect.x = board.points[self.cell[0]][self.cell[1]][0] + (
-                    board.cell_size + 15 * (self.cell[1] + 1)) // 2 - self.rect.width // 2
+                    board.cell_size + 10 * (self.cell[1])) // 2 - self.rect.width // 2 - 8
             self.rect.y = board.top + board.cell_size * (self.cell[0] + 1) - self.rect.height - 15
 
     def update(self):
