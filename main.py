@@ -5,7 +5,7 @@ import pygame
 from games_thing import BoardNacl, generate_level, load_level
 
 pygame.init()
-state = 0  # Состояние программы: 0 - главное меню, 1 - игра
+state = 0  # Состояние программы: 0 - главное меню, 1 - игра, 2 - магазин
 display_inf = pygame.display.Info()
 size = w, h = display_inf.current_w, display_inf.current_h
 screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
@@ -50,7 +50,8 @@ class Button(pygame.sprite.Sprite):
             self.zhamk(0)
 
     def rendel(self):
-        font = pygame.font.Font(None, 60)
+        font = pygame.font.Font('16881.otf', 35
+                                )
         text = font.render(self.txt, True, pygame.Color('white'))
         text_x = self.rect.x + Button.image_b.get_width() // 2 - text.get_width() // 2
         text_y = self.rect.y + Button.image_b.get_height() // 2 - text.get_height() // 2
