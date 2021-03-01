@@ -1,7 +1,8 @@
 import os
 import sys
-import pygame
 from random import randint
+
+import pygame
 
 pygame.init()
 display_inf = pygame.display.Info()
@@ -9,6 +10,48 @@ size = w, h = display_inf.current_w, display_inf.current_h
 screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
 state = 0  # Состояние программы: 0 - главное меню, 1 - игра, 2 - магазин
 player = 1
+
+statss = {'Победы': 0, 'Поражения': 0, 'Купленные_вещи': '[]', 'Деньги': 0}
+file = open('data/stats.txt', 'r')
+
+for i in file.readlines():
+    statss[i.split(':')[0]] = i.split(':')[1]
+statss['Купленные_вещи'] = [i[2:] for i in statss['Купленные_вещи'][1:-1].split(',')]
+print(statss['Купленные_вещи'])
+
+
+def render_text(screen, text, x, y, color):
+    font = pygame.font.Font('16881.otf', 45)
+    text = font.render(text, True, color)
+    screen.blit(text, (x - text.get_width() // 2, y - text.get_height() // 2))
+
+
+def exit(code):
+    global statss
+    file = open('data/stats.txt', 'w')
+    res = ''
+    for i in statss.keys():
+        res += i + ':' + str(statss[i]) + '\n'
+    file.write(res[:-1])
+    file.close()
+    sys.exit(0)
+
+
+def window_of_warning(text, screen):
+    global timer_on, timer, warning_text
+    timer_on = True
+    warning_text = 'YOU WILL FAIL. ARE YOU SURE?'
+    pygame.draw.rect(screen, (50, 50, 50), (w // 2 - w // 10 * 3, h // 2 - h // 8 * 2.5, w // 10 * 6, h // 8 * 5))
+    render_text(screen, text,
+                w // 2,
+                h // 2, (255, 255, 255))
+    render_text(screen, str(timer // 10),
+                w // 2,
+                h // 2 + h // 8, (255, 255, 255))
+    if timer == 0:
+        warning_text = ''
+        timer_on = False
+        timer = 500
 
 
 def KtoHoditBlin():
@@ -376,7 +419,7 @@ class Queen(Pawn):
 
 
 class Tora(Pawn):
-    image_w = load_image('Tora_elfe.png')
+    image_w = load_image('Tora_elf.png')
     image_w = pygame.transform.scale(image_w,
                                      (int(((h // 5 - 20) / image_w.get_height())
                                           * image_w.get_width()), h // 5 - 20))
@@ -542,17 +585,17 @@ class Slon(Pawn):
             go_p.append(((i + self.cell[0], self.cell[1] + i), 2))
             i += 1
         i = 1
-        while self.cell[0] - i > -1 and self.cell[1] - i > -1\
+        while self.cell[0] - i > -1 and self.cell[1] - i > -1 \
                 and level_map[self.cell[0] - i][self.cell[1] - i].__class__.__name__ == 'Tile':
             go_p.append(((self.cell[0] - i, self.cell[1] - i), 2))
             i += 1
         i = 1
-        while self.cell[1] + i < 8 and self.cell[0] - i > - 1\
+        while self.cell[1] + i < 8 and self.cell[0] - i > - 1 \
                 and level_map[self.cell[0] - i][self.cell[1] + i].__class__.__name__ == 'Tile':
             go_p.append(((self.cell[0] - i, self.cell[1] + i), 2))
             i += 1
         i = 1
-        while self.cell[1] - i > -1 and self.cell[0] + i < 8\
+        while self.cell[1] - i > -1 and self.cell[0] + i < 8 \
                 and level_map[self.cell[0] + i][self.cell[1] - i].__class__.__name__ == 'Tile':
             go_p.append(((self.cell[0] + i, self.cell[1] - i), 2))
             i += 1
@@ -708,27 +751,79 @@ class Konyaka(Pawn):
         return go_p
 
 
+class Spell:
+    def __str__(self):
+        return f'sp-{self.name}-{self.cost}'
+
+    def __init__(self, name, cost):
+        self.name = name
+        self.cost = cost
+
+    def cast(self):
+        pass
+
+
+class Emojy:
+
+    def __str__(self):
+        return f'em-{self.name}-{self.cost}'
+
+    def __init__(self, name, cost):
+        self.name = name
+        self.cost = cost
+
+
+class ItemToBy:
+
+    def __init__(self, item, y, but_group):
+        global statss
+        self.y = y
+        self.item = item
+        self.button = Button((w // 2 + w // 10 - 10, self.y + 10),
+                             self.buy_item, 'BUY', but_group, scale=(w // 10 * 2, 100))
+        if str(self.item) not in statss['Купленные_вещи']:
+            self.state_of_bougth = True
+        else:
+            self.state_of_bougth = False
+
+    def buy_item(self, n):
+        global statss
+        statss['Купленные_вещи'].append(str(self.item))
+        self.state_of_bougth = False
+        if self.button.scale != (1, 1):
+            self.button.image = pygame.transform.scale(Button.image_b, self.button.scale)
+        else:
+            self.button.image = Button.image_b
+
+    def render(self, screen):
+        if not self.state_of_bougth:
+            pygame.draw.rect(screen, (116, 116, 116), (w // 2 - w // 10 * 3, self.y, w // 10 * 6, 120), 0)
+            pygame.draw.rect(screen, (160, 160, 160), (w // 2 - w // 10 * 3, self.y, w // 10 * 6, 120), 10)
+        else:
+            pygame.draw.rect(screen, (116, 61, 21), (w // 2 - w // 10 * 3, self.y, w // 10 * 6, 120), 0)
+            pygame.draw.rect(screen, (160, 108, 59), (w // 2 - w // 10 * 3, self.y, w // 10 * 6, 120), 10)
+        font = pygame.font.Font('16881.otf', 45)
+        text = font.render(self.item.name + ' --------- ' + str(self.item.cost), True, pygame.Color('white'))
+        text_x = w // 2 - w // 10 * 3 + 30
+        text_y = self.y + 60 - text.get_height() // 2
+        screen.blit(text, (text_x, text_y))
+
+    def update(self, event):
+        if self.state_of_bougth:
+            self.button.update(event)
+
+
 class Shooop():
     def __init__(self):
         self.groups = [pygame.sprite.Group(), pygame.sprite.Group(), pygame.sprite.Group()]
         self.page = 1
-        self.buttons = [Button((w // 2 - Button.image_b.get_width() // 2 - Button.image_b.get_width() // 2, h // 8),
-                               self.change_page, 'Spells', self.groups[2]),
-                        Button((w // 2 - Button.image_b.get_width() // 2 + Button.image_b.get_width() // 2, h // 8),
-                               self.change_page, 'Emojy',  self.groups[2])
-            ]
-        self.page_1_buttons = [Button(
-                (w // 2 - Button.image_b.get_width() // 2 + Button.image_b.get_width() // 2 - w // 6 * 2, h // 8 * 2),
-                self.change_page, 'Hit figure ---------------------- 30', self.groups[0],
-                (w // 6 * 4, Button.image_b.get_height())),
-                        Button((w // 2 - Button.image_b.get_width() // 2 + Button.image_b.get_width() // 2 - w // 6 * 2,
-                                h // 8 * 3),
-                               self.change_page, 'Repair figure ---------------------- 500', self.groups[0],
-                               (w // 6 * 4, Button.image_b.get_height()))]
-        self.page_2_buttons = [Button(
-                (w // 2 - Button.image_b.get_width() // 2 + Button.image_b.get_width() // 2 - w // 6 * 2, h // 8 * 2),
-                self.change_page, 'Rat emojy ---------------------- 40', self.groups[1],
-                (w // 6 * 4, Button.image_b.get_height()))]
+        self.buttons = [Button((w // 2 - (w // 4) // 2 - (w // 4) // 2, h // 8),
+                               self.change_page, 'Spells', self.groups[2], scale=(w // 4, h // 8)),
+                        Button((w // 2 - w // 4 // 2 + w // 4 // 2, h // 8),
+                               self.change_page, 'Emojy', self.groups[2], scale=(w // 4, h // 8))
+                        ]
+        self.items_to_buy = [ItemToBy(Spell('Hit Figure', 666), h // 8 * 2, self.groups[0])]
+        self.items_to_buy1 = [ItemToBy(Emojy('Emojy: Rats', 50), h // 8 * 2, self.groups[1])]
 
     def change_page(self, n):
         self.page = -self.page
@@ -740,24 +835,30 @@ class Shooop():
         for i in self.buttons:
             i.update(args)
         if self.page == 1:
-            for i in self.page_1_buttons:
+            for i in self.items_to_buy:
                 i.update(args)
         else:
-            for i in self.page_2_buttons:
+            for i in self.items_to_buy1:
                 i.update(args)
 
-    def render(self):
+    def render(self, screen):
+        global render_text
+        render_text(screen, str(statss['Деньги']), w // 30, w // 30, (0, 0, 0))
         self.groups[2].draw(screen)
         for i in self.buttons:
             i.rendel()
         if self.page == 1:
+            for i in self.items_to_buy:
+                i.render(screen)
             self.groups[0].draw(screen)
-            for i in self.page_1_buttons:
-                i.rendel()
+            for i in self.items_to_buy:
+                i.button.rendel()
         else:
+            for i in self.items_to_buy1:
+                i.render(screen)
             self.groups[1].draw(screen)
-            for i in self.page_2_buttons:
-                i.rendel()
+            for i in self.items_to_buy1:
+                i.button.rendel()
 
 
 class Button(pygame.sprite.Sprite):
@@ -845,11 +946,14 @@ def background(screen):
                             (randint(0, w), randint(0, h), randint(1, 42), randint(1, 42)), 0)
 
 
+timer = 500
 if __name__ == '__main__':
     # Глобальные штуки
     running = True
+    timer_on = False
     all_sprites1 = pygame.sprite.Group()
     all_sprites = pygame.sprite.Group()
+    warning_text = 'YOU WILL FAIL. ARE YOU SURE?'
 
     # Игровые элементы
     board = BoardNacl()
@@ -863,6 +967,7 @@ if __name__ == '__main__':
     stats = Button((w // 2 - 150, h // 2), lambda y: y, 'STATS', all_sprites1, scale=(300, 150))
 
     while running:
+
         screen.fill((255, 255, 255))
         if state == 0:
             all_sprites1.draw(screen)
@@ -883,7 +988,10 @@ if __name__ == '__main__':
             KtoHoditBlin()
             all_sprites.draw(screen)
         elif state == 2:
-            shoop.render()
+            shoop.render(screen)
+        if timer_on:
+            timer -= 1
+            window_of_warning(warning_text, screen)
         pygame.display.flip()
         for event in pygame.event.get():
             if state == 0:
@@ -903,5 +1011,14 @@ if __name__ == '__main__':
                     if state == 0:
                         running = False
                     else:
-                        state = 0
+                        if state == 1:
+                            if not timer_on:
+                                window_of_warning('YOU WILL FAIL. ARE YOU SURE?', screen)
+                            else:
+                                timer_on = False
+                                timer = 500
+                                state = 0
+                                statss['Деньги'] = int(statss['Деньги']) + 10
+                        else:
+                            state = 0
     pygame.quit()
