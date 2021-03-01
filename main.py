@@ -840,7 +840,6 @@ def generate_level(level, all_sprites, board):
 
 
 def background(screen):
-    screen.fill((255, 255, 255))
     for i in range(50):
         pygame.draw.ellipse(screen, (randint(230, 254), randint(230, 254), randint(230, 254)),
                             (randint(0, w), randint(0, h), randint(1, 42), randint(1, 42)), 0)
@@ -873,7 +872,11 @@ if __name__ == '__main__':
             stats.rendel()
         elif state == 1:
             fps += 1
-            if fps == 30:
+            if fps == 20:
+                background(screen)
+            if fps == 60:
+                background(screen)
+            if fps == 200:
                 fps = 0
                 background(screen)
             board.render(screen)
