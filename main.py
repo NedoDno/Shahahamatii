@@ -627,18 +627,150 @@ class King(Pawn):
 
 
 class Konyaka(Pawn):
-    pass
+    image_w = load_image('Horse_elf.png')
+    image_w = pygame.transform.scale(image_w,
+                                     (int(((h // 5 - 20) / image_w.get_height())
+                                          * image_w.get_width()), h // 5 - 20))
+    image_b = load_image('Horse_human.png')
+    image_b = pygame.transform.scale(image_b,
+                                     (int(((h // 5 - 20) / image_b.get_height()) * image_b.get_width()), h // 5 - 20))
+
+    # Изменить
+    def __str__(self):
+        return 'h'
+
+    def __init__(self, color, pos, all_sprites, board):
+        '''Инициализирует фигуру'''
+        # Вызов конструктора родительского класса
+        super().__init__(all_sprites, pos, all_sprites, board)
+        # Присвоения цвета
+        self.color = color
+        # Присвоение картинки в зависимости от цвета
+        if color == 1:
+            self.image = Konyaka.image_w
+        else:
+            self.image = Konyaka.image_b
+
+        self.cell = ''  # Координаты клетки, на которой стоит данная фигура
+        self.move(pos, board)  # передвигаем фигуру на данную клетку
+
+    def get_attack_coords(self):
+        attack_p = []  # Список клеток, которые может атаковать данная фигура
+
+        # находим координаты клетки, которая теоритически может быть атакована
+        if 0 <= self.cell[1] + 2 < 8 and 0 <= self.cell[0] + 1 < 8:
+            attack_p.append(((self.cell[0] + 1, self.cell[1] + 2), 3))
+        if 0 <= self.cell[1] + 1 < 8 and 0 <= self.cell[0] + 2 < 8:
+            attack_p.append(((self.cell[0] + 2, self.cell[1] + 1), 3))
+        if 0 <= self.cell[1] - 1 < 8 and 0 <= self.cell[0] + 2 < 8:
+            attack_p.append(((self.cell[0] + 2, self.cell[1] - 1), 3))
+        if 0 <= self.cell[1] - 2 < 8 and 0 <= self.cell[0] + 1 < 8:
+            attack_p.append(((self.cell[0] + 1, self.cell[1] - 2), 3))
+        if 0 <= self.cell[1] - 2 < 8 and 0 <= self.cell[0] - 1 < 8:
+            attack_p.append(((self.cell[0] - 1, self.cell[1] - 2), 3))
+        if 0 <= self.cell[1] - 1 < 8 and 0 <= self.cell[0] - 2 < 8:
+            attack_p.append(((self.cell[0] - 2, self.cell[1] - 1), 3))
+        if 0 <= self.cell[1] + 1 < 8 and 0 <= self.cell[0] - 2 < 8:
+            attack_p.append(((self.cell[0] - 2, self.cell[1] + 1), 3))
+        if 0 <= self.cell[1] + 2 < 8 and 0 <= self.cell[0] - 1 < 8:
+            attack_p.append(((self.cell[0] - 1, self.cell[1] + 2), 3))
+        # Исключаем клетки, в которых не содержится фигуры
+        attack_p = [i for i in attack_p if
+                    level_map[i[0][0]][i[0][1]].__class__.__name__ != 'Tile' and level_map[i[0][0]][
+                        i[0][1]].color != self.color]
+
+        return attack_p
+
+    # Изменить
+    def get_go_coords(self):
+        go_p = []  # список клеток, на которые фигура может пойти
+
+        # находим координаты клетки, на которые фигура может пойти
+        if 0 <= self.cell[1] + 2 < 8 and 0 <= self.cell[0] + 1 < 8:
+            go_p.append(((self.cell[0] + 1, self.cell[1] + 2), 2))
+        if 0 <= self.cell[1] + 1 < 8 and 0 <= self.cell[0] + 2 < 8:
+            go_p.append(((self.cell[0] + 2, self.cell[1] + 1), 2))
+        if 0 <= self.cell[1] - 1 < 8 and 0 <= self.cell[0] + 2 < 8:
+            go_p.append(((self.cell[0] + 2, self.cell[1] - 1), 2))
+        if 0 <= self.cell[1] - 2 < 8 and 0 <= self.cell[0] + 1 < 8:
+            go_p.append(((self.cell[0] + 1, self.cell[1] - 2), 2))
+        if 0 <= self.cell[1] - 2 < 8 and 0 <= self.cell[0] - 1 < 8:
+            go_p.append(((self.cell[0] - 1, self.cell[1] - 2), 2))
+        if 0 <= self.cell[1] - 1 < 8 and 0 <= self.cell[0] - 2 < 8:
+            go_p.append(((self.cell[0] - 2, self.cell[1] - 1), 2))
+        if 0 <= self.cell[1] + 1 < 8 and 0 <= self.cell[0] - 2 < 8:
+            go_p.append(((self.cell[0] - 2, self.cell[1] + 1), 2))
+        if 0 <= self.cell[1] + 2 < 8 and 0 <= self.cell[0] - 1 < 8:
+            go_p.append(((self.cell[0] - 1, self.cell[1] + 2), 2))
+
+        # Исключаем клетки, которые содержат фигуры или которые находятся за фигурами
+        go_p = [i for i in go_p if level_map[i[0][0]][i[0][1]].__class__.__name__ == 'Tile']
+        return go_p
+
+
+class Shooop():
+    def __init__(self):
+        self.groups = [pygame.sprite.Group(), pygame.sprite.Group(), pygame.sprite.Group()]
+        self.page = 1
+        self.buttons = [Button((w // 2 - Button.image_b.get_width() // 2 - Button.image_b.get_width() // 2, h // 8),
+                               self.change_page, 'Spells', self.groups[2]),
+                        Button((w // 2 - Button.image_b.get_width() // 2 + Button.image_b.get_width() // 2, h // 8),
+                               self.change_page, 'Emojy',  self.groups[2])
+            ]
+        self.page_1_buttons = [Button(
+                (w // 2 - Button.image_b.get_width() // 2 + Button.image_b.get_width() // 2 - w // 6 * 2, h // 8 * 2),
+                self.change_page, 'Hit figure ---------------------- 30', self.groups[0],
+                (w // 6 * 4, Button.image_b.get_height())),
+                        Button((w // 2 - Button.image_b.get_width() // 2 + Button.image_b.get_width() // 2 - w // 6 * 2,
+                                h // 8 * 3),
+                               self.change_page, 'Repair figure ---------------------- 500', self.groups[0],
+                               (w // 6 * 4, Button.image_b.get_height()))]
+        self.page_2_buttons = [Button(
+                (w // 2 - Button.image_b.get_width() // 2 + Button.image_b.get_width() // 2 - w // 6 * 2, h // 8 * 2),
+                self.change_page, 'Rat emojy ---------------------- 40', self.groups[1],
+                (w // 6 * 4, Button.image_b.get_height()))]
+
+    def change_page(self, n):
+        self.page = -self.page
+
+    def buy(self, n):
+        pass
+
+    def update(self, args):
+        for i in self.buttons:
+            i.update(args)
+        if self.page == 1:
+            for i in self.page_1_buttons:
+                i.update(args)
+        else:
+            for i in self.page_2_buttons:
+                i.update(args)
+
+    def render(self):
+        self.groups[2].draw(screen)
+        for i in self.buttons:
+            i.rendel()
+        if self.page == 1:
+            self.groups[0].draw(screen)
+            for i in self.page_1_buttons:
+                i.rendel()
+        else:
+            self.groups[1].draw(screen)
+            for i in self.page_2_buttons:
+                i.rendel()
 
 
 class Button(pygame.sprite.Sprite):
     image_b = load_image('button.png')
-    image_b = pygame.transform.scale(image_b, (240, 130))
     image_k = load_image('button1.png')
-    image_k = pygame.transform.scale(image_k, (240, 130))
 
-    def __init__(self, pos, met, txt):
+    def __init__(self, pos, met, txt, all_sprites1, scale=(1, 1)):
         super().__init__(all_sprites1)
-        self.image = Button.image_b
+        self.scale = scale
+        if scale != (1, 1):
+            self.image = pygame.transform.scale(Button.image_b, scale)
+        else:
+            self.image = Button.image_b
         self.rect = self.image.get_rect()
         self.rect.x = pos[0]
         self.rect.y = pos[1]
@@ -648,18 +780,23 @@ class Button(pygame.sprite.Sprite):
     def update(self, args):
         if args.type == pygame.MOUSEMOTION:
             if self.rect.collidepoint(args.pos):
-                self.image = Button.image_k
+                if self.scale != (1, 1):
+                    self.image = pygame.transform.scale(Button.image_k, self.scale)
+                else:
+                    self.image = Button.image_k
             else:
-                self.image = Button.image_b
+                if self.scale != (1, 1):
+                    self.image = pygame.transform.scale(Button.image_b, self.scale)
+                else:
+                    self.image = Button.image_b
         elif args.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(args.pos) and args:
             self.zhamk(0)
 
     def rendel(self):
-        font = pygame.font.Font('16881.otf', 35
-                                )
+        font = pygame.font.Font('16881.otf', 45)
         text = font.render(self.txt, True, pygame.Color('white'))
-        text_x = self.rect.x + Button.image_b.get_width() // 2 - text.get_width() // 2
-        text_y = self.rect.y + Button.image_b.get_height() // 2 - text.get_height() // 2
+        text_x = self.rect.x + self.image.get_width() // 2 - text.get_width() // 2
+        text_y = self.rect.y + self.image.get_height() // 2 - text.get_height() // 2
         screen.blit(text, (text_x, text_y))
 
     def zhamk(self, n):
@@ -669,6 +806,11 @@ class Button(pygame.sprite.Sprite):
 def star(n):
     global state
     state = 1
+
+
+def shop(n):
+    global state
+    state = 2
 
 
 # Класс который обозначает пустую клетку
@@ -682,7 +824,8 @@ class Tile:
 
 # Словарь с обозначениями фигур
 PIECES = {'P': (Pawn, 1), 'p': (Pawn, -1), '.': (Tile, 0), 'Q': (Queen, 1), 'q': (Queen, -1),
-          'T': (Tora, 1), 't': (Tora, -1), 'S': (Slon, 1), 's': (Slon, -1), 'K': (King, 1), 'k': (King, -1)}
+          'T': (Tora, 1), 't': (Tora, -1), 'S': (Slon, 1), 's': (Slon, -1), 'K': (King, 1), 'k': (King, -1),
+          'H': (Konyaka, 1), 'h': (Konyaka, -1)}
 level_map = []  # карта уровня
 eaten_figure = []  # Съеденые фигуры
 
@@ -711,11 +854,14 @@ if __name__ == '__main__':
 
     # Игровые элементы
     board = BoardNacl()
+    shoop = Shooop()
     generate_level(load_level('pole.txt'), all_sprites, board)
     fps = 0
     # Элементы меню
-    ext = Button((w // 2 - Button.image_b.get_width() // 2, h // 2), exit, 'EXIT')
-    start = Button((w // 2 - Button.image_b.get_width() // 2, h // 8 * 3), star, 'START')
+    ext = Button((w // 2 - 150, h // 8 * 6), exit, 'EXIT', all_sprites1, scale=(300, 150))
+    start = Button((w // 2 - 150, h // 8 * 3), star, 'START', all_sprites1, scale=(300, 150))
+    shopp = Button((w // 2 - 150, h // 8 * 5), shop, 'SHOP', all_sprites1, scale=(300, 150))
+    stats = Button((w // 2 - 150, h // 2), lambda y: y, 'STATS', all_sprites1, scale=(300, 150))
 
     while running:
         screen.fill((255, 255, 255))
@@ -723,6 +869,8 @@ if __name__ == '__main__':
             all_sprites1.draw(screen)
             ext.rendel()
             start.rendel()
+            shopp.rendel()
+            stats.rendel()
         elif state == 1:
             fps += 1
             if fps == 30:
@@ -731,14 +879,20 @@ if __name__ == '__main__':
             board.render(screen)
             KtoHoditBlin()
             all_sprites.draw(screen)
+        elif state == 2:
+            shoop.render()
         pygame.display.flip()
         for event in pygame.event.get():
             if state == 0:
                 start.update(event)
                 ext.update(event)
+                shopp.update(event)
+                stats.update(event)
             elif state == 1:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     board.get_click(event.pos)
+            elif state == 2:
+                shoop.update(event)
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
